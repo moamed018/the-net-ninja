@@ -2,6 +2,11 @@
     position: relative;
 }
 
+.back.disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 .card img {
     width: 100%;
     display: block;

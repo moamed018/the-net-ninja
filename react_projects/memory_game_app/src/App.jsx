@@ -1,6 +1,7 @@
 import "./App.css";
 import { useState, useEffect } from "react";
 import SingleCard from "./components/SingleCard";
+import Modal from "./components/UI/Modal";
 
 const cardImages = [
     { src: "/img/helmet-1.png", matched: false },
@@ -20,6 +21,11 @@ function App() {
 
     const [disabled, setDisabled] = useState(false);
 
+    const [limit, setLimit] = useState(8);
+    const [win, setWin] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [stopGaming, setStopGaming] = useState(false);
+
     // shuffle cards
     const shuffleCards = () => {
         const shuffledCards = [...cardImages, ...cardImages]
@@ -30,6 +36,10 @@ function App() {
         setChoiceTwo(null);
         setCards(shuffledCards);
         setTurns(0);
+        setShowModal(false);
+        setLimit(8);
+        setWin(false);
+        setStopGaming(false);
     };
 
     // Handle a Choice
@@ -62,6 +72,7 @@ function App() {
                 resetTurn();
             } else {
                 setTimeout(() => resetTurn(), 1000);
+                setLimit((prevsLimit) => prevsLimit - 1);
             }
         }
     }, [choiceOne, choiceTwo]);
@@ -71,12 +82,51 @@ function App() {
         shuffleCards();
     }, []);
 
-    console.log(cards);
+    useEffect(() => {
+        if (limit === 0) {
+            setShowModal(true);
+            setStopGaming(true);
+        }
+    }, [limit]);
+
+    useEffect(() => {
+        const notMatched = cards.filter((val) => {
+            return val.matched === false;
+        });
+        if (notMatched.length === 0 && cards.length > 0) {
+            setWin(true);
+            setShowModal(true);
+        }
+    }, [cards]);
+
+    const hideFuncModal = () => {
+        setShowModal(false);
+    };
+
     return (
         <div className="App">
+            {limit === 0 && showModal && (
+                <Modal
+                    heading="Game over"
+                    info={`your limit is ${limit} and your turns is ${turns}`}
+                    hideFunc={hideFuncModal}
+                    btnFunc={shuffleCards}
+                    btnContent="New Game!"
+                />
+            )}
+
+            {win && showModal && (
+                <Modal
+                    heading="Your Win"
+                    info={`your done in ${turns} turns`}
+                    hideFunc={hideFuncModal}
+                    btnFunc={shuffleCards}
+                    btnContent="New Game!"
+                />
+            )}
+
             <h1>Magic Match</h1>
             <button onClick={shuffleCards}>New Game</button>
-
             <div className="card-grid">
                 {cards.map((card) => {
                     return (
@@ -89,12 +139,13 @@ function App() {
                                 card === choiceTwo ||
                                 card.matched
                             }
-                            disabled={disabled}
+                            disabled={disabled || stopGaming}
                         />
                     );
                 })}
             </div>
             <p>Turns: {turns}</p>
+            <p>Limit: {limit}</p>
         </div>
     );
 }
